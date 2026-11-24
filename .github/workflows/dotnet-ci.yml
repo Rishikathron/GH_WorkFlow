@@ -11,6 +11,7 @@ on:
       - main
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
 
@@ -29,21 +30,31 @@ jobs:
       - name: Build application
         run: dotnet build --no-restore
 
+      # Upload compiled test binaries
+      - name: Upload test binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-build
+          path: WorkflowSample.Tests/bin/Debug/net10.0/
+
+
   unit-tests:
     needs: build
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      # Download compiled test binaries
+      - name: Download test binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: test-build
+          path: WorkflowSample.Tests/bin/Debug/net10.0/
 
+      # Execute tests without rebuilding
       - name: Run unit tests
-        run: dotnet test --verbosity normal
+        run: dotnet vstest WorkflowSample.Tests/bin/Debug/net10.0/WorkflowSample.Tests.dll
